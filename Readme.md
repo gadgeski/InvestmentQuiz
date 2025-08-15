@@ -1,6 +1,6 @@
 # InvestmentQuiz
 
-投資知識を楽しく学べる iOS/macOS/visionOS 対応のクイズアプリです。
+投資知識を楽しく学べる iOS 対応のクイズアプリです。
 
 ## 概要
 
