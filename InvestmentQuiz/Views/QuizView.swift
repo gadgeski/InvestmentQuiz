@@ -6,9 +6,12 @@
 //
 
 import SwiftUI
+import UIKit
 
 struct QuizView: View {
     @StateObject private var vm = QuizState()
+    @AppStorage("highScore") private var highScore = 0
+    @State private var didSetNewHighScore = false
 
     var body: some View {
         VStack(spacing: 16) {
@@ -18,10 +21,14 @@ struct QuizView: View {
                     Text("投資クイズ")
                         .font(.title2).bold()
                     Spacer()
-                    Text("スコア \(vm.score)/\(vm.questions.count)")
-                        .font(.subheadline).foregroundColor(.secondary)
+                    VStack(alignment: .trailing, spacing: 2) {
+                        Text("スコア \(vm.score)/\(vm.questions.count)")
+                            .font(.subheadline).foregroundColor(.secondary)
+                        Text("ベスト \(highScore)")
+                            .font(.caption).foregroundColor(.secondary)
+                    }
                 }
-                ProgressBar(progress: (Double(vm.currentIndex) / Double(vm.questions.count)))
+                ProgressBar(progress: vm.progress)
                 HStack {
                     Text("Q\(vm.currentIndex + 1)/\(vm.questions.count)")
                         .font(.subheadline).foregroundColor(.secondary)
@@ -61,9 +68,7 @@ struct QuizView: View {
                 // Choices
                 VStack(spacing: 10) {
                     ForEach(vm.currentQuestion.choices.indices, id: \.self) { idx in
-                        Button {
-                            vm.select(idx)
-                        } label: {
+                        Button { vm.select(idx) } label: {
                             ChoiceButton(
                                 title: vm.currentQuestion.choices[idx],
                                 state: buttonState(for: idx)
@@ -93,8 +98,8 @@ struct QuizView: View {
                 }
             }
             .padding()
-            .background(RoundedRectangle(cornerRadius: 20).fill(Color(.systemBackground)))
-            .overlay(RoundedRectangle(cornerRadius: 20).stroke(Color(.systemGray4), lineWidth: 1))
+            .background(RoundedRectangle(cornerRadius: 20).fill(Color(UIColor.systemBackground)))
+            .overlay(RoundedRectangle(cornerRadius: 20).stroke(Color(UIColor.systemGray4), lineWidth: 1))
             .padding(.horizontal)
             .shadow(color: .black.opacity(0.05), radius: 8, x: 0, y: 4)
 
@@ -102,8 +107,11 @@ struct QuizView: View {
 
             // Footer buttons
             HStack {
-                Button(role: .none) {
-                    withAnimation { vm.restart() }
+                Button {
+                    withAnimation {
+                        vm.restart()
+                        didSetNewHighScore = false
+                    }
                 } label: {
                     Label("最初からやり直す", systemImage: "arrow.counterclockwise")
                 }
@@ -111,13 +119,24 @@ struct QuizView: View {
                 Spacer()
 
                 if vm.isLastQuestion && vm.isAnswered {
-                    Button {
-                        withAnimation { vm.restart() }
-                    } label: {
-                        Label("結果: \(vm.score)/\(vm.questions.count)  再挑戦", systemImage: "flag.checkered")
-                            .font(.headline)
+                    HStack(spacing: 12) {
+                        if didSetNewHighScore {
+                            Label("ベスト更新！ \(highScore)点", systemImage: "star.fill")
+                                .foregroundColor(.orange)
+                                .font(.subheadline)
+                        }
+                        Button {
+                            // 再挑戦（表示更新用フラグはリセット）
+                            withAnimation {
+                                vm.restart()
+                                didSetNewHighScore = false
+                            }
+                        } label: {
+                            Label("結果: \(vm.score)/\(vm.questions.count)  再挑戦", systemImage: "flag.checkered")
+                                .font(.headline)
+                        }
+                        .buttonStyle(.borderedProminent)
                     }
-                    .buttonStyle(.borderedProminent)
                 } else {
                     Button {
                         withAnimation { vm.next() }
@@ -132,10 +151,16 @@ struct QuizView: View {
             .padding(.horizontal)
             .padding(.bottom, 16)
         }
+        // 最終問題を解答した瞬間にハイスコアを更新
+        .onChange(of: vm.isAnswered) { newValue in
+            if newValue && vm.isLastQuestion {
+                updateHighScoreIfNeeded()
+            }
+        }
         .animation(.easeInOut, value: vm.showHint)
         .animation(.easeInOut, value: vm.isAnswered)
         .animation(.easeInOut, value: vm.currentIndex)
-        .background(Color(.systemGroupedBackground).ignoresSafeArea())
+        .background(Color(UIColor.systemGroupedBackground).ignoresSafeArea())
     }
 
     private func buttonState(for idx: Int) -> ChoiceButton.ButtonState {
@@ -144,5 +169,14 @@ struct QuizView: View {
         if idx == vm.currentQuestion.correctIndex { return .correct }
         if idx == selected && idx != vm.currentQuestion.correctIndex { return .wrong }
         return .disabled
+    }
+
+    private func updateHighScoreIfNeeded() {
+        if vm.score > highScore {
+            highScore = vm.score
+            didSetNewHighScore = true
+        } else {
+            didSetNewHighScore = false
+        }
     }
 }
