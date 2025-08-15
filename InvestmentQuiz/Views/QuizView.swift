@@ -152,7 +152,7 @@ struct QuizView: View {
             .padding(.bottom, 16)
         }
         // 最終問題を解答した瞬間にハイスコアを更新
-        .onChange(of: vm.isAnswered) { newValue in
+        .onChange(of: vm.isAnswered, initial: false) { oldValue, newValue in
             if newValue && vm.isLastQuestion {
                 updateHighScoreIfNeeded()
             }
