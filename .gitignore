@@ -19,3 +19,8 @@ build/
 
 # macOS
 .DS_Store
+
+# Node API
+quiz-api/node_modules/
+quiz-api/dist/
+quiz-api/.env
