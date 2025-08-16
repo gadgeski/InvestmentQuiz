@@ -1,5 +1,4 @@
 # .gitignoreに追加
-Info.plist
 
 # Xcode
 DerivedData/
