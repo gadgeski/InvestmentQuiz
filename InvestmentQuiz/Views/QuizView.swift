@@ -151,6 +151,12 @@ struct QuizView: View {
             .padding(.horizontal)
             .padding(.bottom, 16)
         }
+        
+        // ← これを追加（初回表示でサーバーから問題を取得）
+        .task {
+            await vm.loadFromServerIfAvailable()
+        }
+        
         // 最終問題を解答した瞬間にハイスコアを更新
         .onChange(of: vm.isAnswered, initial: false) { oldValue, newValue in
             if newValue && vm.isLastQuestion {
