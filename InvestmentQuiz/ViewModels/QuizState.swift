@@ -12,6 +12,9 @@ final class QuizState: ObservableObject {
     // 差し替え可能に（フォールバックはローカルの静的データ）
     @Published var questions: [QuizQuestion] = InvestmentQuizData.questions
 
+    // ↓ 読み込みインジケータ用追加
+    @Published var isLoading: Bool = false
+    
     @Published var currentIndex: Int = 0
     @Published var selectedIndex: Int? = nil
     @Published var showHint: Bool = false
