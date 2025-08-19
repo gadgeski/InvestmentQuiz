@@ -11,6 +11,10 @@ extension QuizState {
     /// サーバーに問題があれば差し替える。失敗時はフォールバック（何もしない）
     @MainActor
     func loadFromServerIfAvailable() async {
+        if isLoading { return }
+        isLoading = true
+        defer { isLoading = false }
+
         do {
             let remote = try await QuizAPI.fetchQuestions()
             // 最低限の整合性チェック：correctIndex が範囲内
@@ -19,11 +23,10 @@ extension QuizState {
             }
             let mapped = valid.map(QuizQuestion.fromRemote)
             if !mapped.isEmpty {
-                setQuestions(mapped)
+                setQuestions(mapped) // 成功時のみ置換（進行は restart 済み）
             }
         } catch {
-            // ネットワーク/デコード失敗時は黙ってフォールバック（ローカルのまま）
-            // 必要ならログ出力やユーザ通知を追加
+            // 失敗時は黙ってフォールバック（ローカル問題のまま）
         }
     }
 }
